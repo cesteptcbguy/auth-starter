@@ -1,20 +1,29 @@
-// src/app/api/collections/[id]/items/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { assetId } = await req.json().catch(() => ({}));
-  if (!assetId) return NextResponse.json({ ok:false, error:"assetId required" }, { status:400 });
-  const collectionId = Number(params.id);
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { assetId } = (await req.json().catch(() => ({}))) as {
+    assetId?: number;
+  };
+  if (!assetId)
+    return NextResponse.json(
+      { ok: false, error: "assetId required" },
+      { status: 400 }
+    );
 
-  const supabase = createClient();
+  const collectionId = Number(id);
+  const supabase = await createClient();
 
   // find next position
   const { data: posData } = await supabase
     .from("collection_items")
     .select("position")
     .eq("collection_id", collectionId)
-    .order("position", { ascending:false })
+    .order("position", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -22,29 +31,48 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { error } = await supabase
     .from("collection_items")
-    .insert({ collection_id: collectionId, asset_id: Number(assetId), position: nextPos })
+    .insert({
+      collection_id: collectionId,
+      asset_id: Number(assetId),
+      position: nextPos,
+    })
     .select("id")
     .single();
 
-  // unique constraint -> ignore duplicates gracefully
-  if (error && !error.message.includes("duplicate")) {
-    return NextResponse.json({ ok:false, error:error.message }, { status:500 });
+  // allow duplicates to be no-ops
+  if (error && !error.message.toLowerCase().includes("duplicate")) {
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    );
   }
-  return NextResponse.json({ ok:true });
+  return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   const url = new URL(req.url);
   const assetId = url.searchParams.get("assetId");
-  if (!assetId) return NextResponse.json({ ok:false, error:"assetId required" }, { status:400 });
+  if (!assetId)
+    return NextResponse.json(
+      { ok: false, error: "assetId required" },
+      { status: 400 }
+    );
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("collection_items")
     .delete()
-    .eq("collection_id", Number(params.id))
+    .eq("collection_id", Number(id))
     .eq("asset_id", Number(assetId));
 
-  if (error) return NextResponse.json({ ok:false, error:error.message }, { status:500 });
-  return NextResponse.json({ ok:true });
+  if (error)
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    );
+  return NextResponse.json({ ok: true });
 }

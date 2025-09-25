@@ -15,11 +15,14 @@ export async function GET() {
       .limit(5);
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 500 }
+      );
     }
-
     return NextResponse.json({ ok: true, rows: data ?? [] });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message ?? "unknown" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

@@ -7,7 +7,10 @@ type Sort = "newest" | "featured" | "relevance";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
-  const per = Math.min(48, Math.max(1, Number(url.searchParams.get("per") || "12")));
+  const per = Math.min(
+    48,
+    Math.max(1, Number(url.searchParams.get("per") || "12"))
+  );
   const q = (url.searchParams.get("q") || "").trim();
   const discipline = url.searchParams.get("discipline") || "";
   const gradeBand = url.searchParams.get("gradeBand") || "";
@@ -19,7 +22,7 @@ export async function GET(req: Request) {
   const from = (page - 1) * per;
   const to = from + per - 1;
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   let query = supabase
     .from("assets")
@@ -46,7 +49,10 @@ export async function GET(req: Request) {
 
   // Sort
   if (sort === "featured") {
-    query = query.order("featured", { ascending: false }).order("featured_rank", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
+    query = query
+      .order("featured", { ascending: false })
+      .order("featured_rank", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false });
   } else if (sort === "newest") {
     query = query.order("created_at", { ascending: false });
   } else {
@@ -60,7 +66,10 @@ export async function GET(req: Request) {
   const { data, error, count } = await query;
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({
