@@ -36,5 +36,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/dashboard"], // add more matchers as you protect more areas
+  matcher: ["/dashboard/:path*", "/dashboard", "/collections/:path*", "/collections"], // add more matchers as you protect more areas
 };
