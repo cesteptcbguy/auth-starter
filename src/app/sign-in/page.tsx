@@ -1,60 +1,157 @@
 // src/app/sign-in/page.tsx
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { supabase } from "@/lib/supabase/client";
+import { upsertUserProfile } from "@/lib/profile";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
+
+type FormMessage = {
+  type: "error" | "success";
+  text: string;
+};
+
+type SubmittingAction = "sign-in" | "sign-up" | null;
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<FormMessage | null>(null);
+  const [submitting, setSubmitting] = useState<SubmittingAction>(null);
   const router = useRouter();
 
-  async function signIn() {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-    setLoading(false);
-    if (error) return toast.error(error.message);
+  async function handleSignIn(e?: FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
+    if (submitting) return;
+
+    setMessage(null);
+    setSubmitting("sign-in");
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pw,
+    });
+
+    if (error) {
+      setMessage({ type: "error", text: error.message });
+      toast.error(error.message);
+      setSubmitting(null);
+      return;
+    }
+
+    const signedInUser = data.user;
+    const session = data.session;
+
+    if (signedInUser?.id && session) {
+      const profileEmail = signedInUser.email ?? email;
+      const { error: profileError } = await upsertUserProfile(supabase, {
+        id: signedInUser.id,
+        email: profileEmail,
+      });
+
+      if (profileError) {
+        console.error("user_profiles upsert error", profileError);
+        const fallbackMessage = "We could not load your profile. Please try again.";
+        setMessage({ type: "error", text: fallbackMessage });
+        toast.error(fallbackMessage);
+        setSubmitting(null);
+        return;
+      }
+    }
+
     toast.success("Signed in");
+    setSubmitting(null);
     router.replace("/dashboard");
   }
 
-  async function signUp() {
-    setLoading(true);
+  async function handleSignUp() {
+    if (submitting) return;
+
+    setMessage(null);
+    setSubmitting("sign-up");
+
     const { error } = await supabase.auth.signUp({ email, password: pw });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Check your email to confirm your account.");
+
+    if (error) {
+      setMessage({ type: "error", text: error.message });
+      toast.error(error.message);
+      setSubmitting(null);
+      return;
+    }
+
+    const successText = "Check your email to confirm your account.";
+    setMessage({ type: "success", text: successText });
+    toast.success(successText);
+    setSubmitting(null);
   }
 
   return (
-    <main className="mx-auto max-w-sm p-6 space-y-4">
+    <main className="mx-auto max-w-sm space-y-4 p-6">
       <h1 className="text-2xl font-semibold">Sign in</h1>
-      <div className="space-y-2">
+      <div aria-live="polite" aria-atomic="true" className="space-y-2">
+        {message ? (
+          <Alert variant={message.type === "error" ? "destructive" : "success"}>
+            <AlertTitle>{message.type === "error" ? "Something went wrong" : "Check your inbox"}</AlertTitle>
+            <AlertDescription>{message.text}</AlertDescription>
+          </Alert>
+        ) : null}
+      </div>
+      <form className="space-y-3" onSubmit={handleSignIn} noValidate>
         <Input
+          autoComplete="email"
           placeholder="Email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
+          required
         />
         <Input
+          autoComplete="current-password"
           placeholder="Password"
           type="password"
           value={pw}
-          onChange={(e) => setPw(e.target.value)}
+          onChange={(event) => setPw(event.target.value)}
+          required
         />
         <div className="flex gap-2">
-          <Button onClick={signIn} disabled={loading}>Sign in</Button>
-          <Button variant="secondary" onClick={signUp} disabled={loading}>Create account</Button>
+          <Button type="submit" disabled={Boolean(submitting)}>
+            {submitting === "sign-in" ? (
+              <>
+                <Loader2 aria-hidden className="size-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleSignUp}
+            disabled={Boolean(submitting)}
+          >
+            {submitting === "sign-up" ? (
+              <>
+                <Loader2 aria-hidden className="size-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
         </div>
-      </div>
+      </form>
       <p className="text-sm">
-        <a className="underline" href="/reset-password">Forgot password?</a>
+        <Link className="underline" href="/reset-password">
+          Forgot password?
+        </Link>
       </p>
       <p className="text-sm text-muted-foreground">
         <Link href="/">Back home</Link>
