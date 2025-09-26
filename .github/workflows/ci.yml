@@ -1,37 +1,37 @@
 name: CI
+
 on:
   push:
-    branches: [main]
+    branches: [main, feat/**, fix/**, chore/**]
   pull_request:
-  workflow_dispatch: {}
-
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      CI: true
-      NEXT_TELEMETRY_DISABLED: 1
-      NEXT_PUBLIC_WEB_BASE_URL: http://localhost:3000
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 20
 
-      - name: Setup Node 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
-      - name: Enable Corepack + pnpm 9.15.9
+      - name: Enable Corepack & install pnpm
         run: |
           corepack enable
           corepack prepare pnpm@9.15.9 --activate
-          pnpm -v
-          node -v
+          pnpm --version
 
-      - name: Install deps
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # ✅ Install Playwright browsers + system deps on Ubuntu
+      - name: Install Playwright browsers
+        run: pnpm dlx playwright install --with-deps
 
       - name: Typecheck
         run: pnpm typecheck
@@ -40,4 +40,21 @@ jobs:
         run: pnpm lint
 
       - name: Build
-        run: pnpm -s build
+        env:
+          NEXT_DISABLE_FONT_DOWNLOADS: "1"
+          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "test_anon_key"
+        run: pnpm build
+
+      - name: Screenshot
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "test_anon_key"
+        run: pnpm run screenshot
+
+      - name: Upload screenshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop.png
+          path: public/desktop.png
+          if-no-files-found: error
