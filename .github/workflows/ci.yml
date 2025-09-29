@@ -44,7 +44,7 @@ jobs:
           NEXT_DISABLE_FONT_DOWNLOADS: "1"
           NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "test_anon_key"
-        run: pnpm build
+        run: pnpm build:ci
 
       - name: Screenshot
         env:
