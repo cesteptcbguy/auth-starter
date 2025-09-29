@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:ci": "cross-env NEXT_DISABLE_FONT_DOWNLOADS=1 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=test_anon_key next build",
     "start": "next start --hostname 127.0.0.1 -p 3000",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
