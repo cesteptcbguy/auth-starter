@@ -20,7 +20,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Enable Corepack & install pnpm
+      # ✅ Make pnpm available on PATH (Corepack)
+      - name: Enable Corepack & activate pinned pnpm
         run: |
           corepack enable
           corepack prepare pnpm@9.15.9 --activate
@@ -29,9 +30,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ✅ Install Playwright browsers + system deps on Ubuntu
       - name: Install Playwright browsers
-        run: pnpm dlx playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Typecheck
         run: pnpm typecheck
