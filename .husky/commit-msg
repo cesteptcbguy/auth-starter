@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+msgFile="$1"
+msg="$(cat "$msgFile")"
+
+# very light check: type(scope?): subject
+echo "$msg" | grep -E -i "^(feat|fix|chore|docs|refactor|test|build|ci)(\([^)]+\))?: .+" >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "⚠ Commit message should follow Conventional Commits, e.g.:"
+  echo "  feat(auth): add route guards"
+  exit 1
+fi

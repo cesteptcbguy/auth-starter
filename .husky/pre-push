@@ -9,5 +9,8 @@ if [ "$branch" = "main" ]; then
   exit 1
 fi
 
+# Ensure pnpm via corepack (works in Codex/CI too)
+command -v corepack >/dev/null 2>&1 && corepack enable >/dev/null 2>&1 || true
+
 echo "▶ Running project checks (typecheck + lint + build)…"
-pnpm check || exit 1
+pnpm typecheck && pnpm lint && pnpm build
