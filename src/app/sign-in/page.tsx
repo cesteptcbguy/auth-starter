@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/lib/supabase/client";
-import { upsertUserProfile } from "@/lib/profile";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,36 +33,13 @@ export default function SignInPage() {
     setMessage(null);
     setSubmitting("sign-in");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: pw,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
 
     if (error) {
       setMessage({ type: "error", text: error.message });
       toast.error(error.message);
       setSubmitting(null);
       return;
-    }
-
-    const signedInUser = data.user;
-    const session = data.session;
-
-    if (signedInUser?.id && session) {
-      const profileEmail = signedInUser.email ?? email;
-      const { error: profileError } = await upsertUserProfile(supabase, {
-        id: signedInUser.id,
-        email: profileEmail,
-      });
-
-      if (profileError) {
-        console.error("user_profiles upsert error", profileError);
-        const fallbackMessage = "We could not load your profile. Please try again.";
-        setMessage({ type: "error", text: fallbackMessage });
-        toast.error(fallbackMessage);
-        setSubmitting(null);
-        return;
-      }
     }
 
     toast.success("Signed in");
