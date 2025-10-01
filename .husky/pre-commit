@@ -1,4 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Ensure pnpm via corepack (no-op if already enabled)
+command -v corepack >/dev/null 2>&1 && corepack enable >/dev/null 2>&1 || true
+
+# Fast checks on staged changes
 pnpm lint
