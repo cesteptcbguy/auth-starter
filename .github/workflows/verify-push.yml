@@ -1,0 +1,51 @@
+name: Verify Push & Prep Work Branch
+on:
+    workflow_dispatch:
+        inputs:
+            work_branch:
+                description: "Work branch to create/reset from default"
+                default: "work-codex"
+                required: true
+permissions:
+    contents: write
+    pull-requests: write
+jobs:
+    verify:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout (default branch)
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Identify default branch
+              id: def
+              run: |
+                  set -euo pipefail
+                  DEFAULT="$(gh api repos/${{ github.repository }} | jq -r .default_branch)"
+                  echo "default=$DEFAULT" >> $GITHUB_OUTPUT
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Configure git identity
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            - name: Make a tiny no-op commit on a temp branch to prove push works
+              run: |
+                  git switch -c codex-push-test-$(date +%Y%m%d-%H%M%S) origin/${{ steps.def.outputs.default }}
+                  echo "ok $(date -u +%FT%TZ)" > .codex-push-check.txt
+                  git add .codex-push-check.txt
+                  git commit -m "chore: codex push check"
+                  git push -u origin HEAD
+
+            - name: Create/reset the work branch from default and push
+              run: |
+                  WB="${{ github.event.inputs.work_branch }}"
+                  git switch -C "$WB" "origin/${{ steps.def.outputs.default }}"
+                  git push -u -f origin HEAD
+
+            - name: Print PR link
+              run: |
+                  echo "Create PR: https://github.com/${{ github.repository }}/compare/${{ steps.def.outputs.default }}...${{ github.event.inputs.work_branch }}?expand=1"
