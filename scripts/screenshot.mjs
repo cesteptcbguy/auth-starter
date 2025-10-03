@@ -53,13 +53,12 @@ async function main() {
   let startedServer = false;
 
   if (!(await isServerUp())) {
-    serverProc = spawn('pnpm', ['dev'], {
+    serverProc = spawn('pnpm', ['start', '-p', String(PORT)], {
       stdio: 'inherit',
       env: {
         ...process.env,
         SCREENSHOT_MODE: process.env.SCREENSHOT_MODE || '1',
         NEXT_PUBLIC_SCREENSHOT_MODE: process.env.NEXT_PUBLIC_SCREENSHOT_MODE || '1',
-        TURBOPACK: process.env.TURBOPACK || '0',
         PORT: String(PORT),
       },
     });
