@@ -1,7 +1,7 @@
 // src/app/sign-in/page.tsx
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -24,7 +24,43 @@ export default function SignInPage() {
   const [pw, setPw] = useState("");
   const [message, setMessage] = useState<FormMessage | null>(null);
   const [submitting, setSubmitting] = useState<SubmittingAction>(null);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("redirectTo");
+    const hasQuery = Boolean(fromQuery && fromQuery.startsWith("/"));
+
+    if (hasQuery && fromQuery) {
+      setRedirectTo(fromQuery);
+    }
+
+    async function hydrateFallback() {
+      try {
+        const response = await fetch("/api/redirect-fallback", {
+          credentials: "same-origin",
+        });
+        if (!response.ok) return;
+        const fallback = await response.text();
+        if (cancelled || hasQuery) return;
+        if (fallback && fallback.startsWith("/")) {
+          setRedirectTo(fallback);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Failed to read redirect fallback", error);
+        }
+      }
+    }
+
+    hydrateFallback();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSignIn(e?: FormEvent<HTMLFormElement>) {
     e?.preventDefault();
@@ -42,9 +78,26 @@ export default function SignInPage() {
       return;
     }
 
+    let destination = redirectTo;
+    if (!destination) {
+      try {
+        const response = await fetch("/api/redirect-fallback", {
+          credentials: "same-origin",
+        });
+        if (response.ok) {
+          const fallback = await response.text();
+          if (fallback && fallback.startsWith("/")) {
+            destination = fallback;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to resolve redirect fallback after sign-in", err);
+      }
+    }
+
     toast.success("Signed in");
     setSubmitting(null);
-    router.replace("/dashboard");
+    router.replace(destination ?? "/dashboard");
   }
 
   async function handleSignUp() {
