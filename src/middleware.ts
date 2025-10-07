@@ -40,13 +40,32 @@ export default async function middleware(req: NextRequest) {
   );
 
   let user = null;
+
+  function extractErr(e: unknown): { code?: string; message?: string } {
+    if (typeof e === "object" && e !== null) {
+      const { code, message } = e as { code?: string; message?: string };
+      return { code, message };
+    }
+    return {};
+  }
+
   try {
     const {
       data: { user: fetchedUser },
     } = await supabase.auth.getUser();
     user = fetchedUser;
-  } catch (error) {
-    console.warn("[middleware] supabase auth.getUser failed", error);
+  } catch (error: unknown) {
+    const { code, message } = extractErr(error);
+    const msg = (message ?? "").toLowerCase();
+
+    if (
+      code === "refresh_token_not_found" ||
+      msg.includes("refresh token not found")
+    ) {
+      // expected — no active session yet; keep quiet
+    } else {
+      console.warn("[middleware] supabase auth.getUser failed", error);
+    }
   }
 
   const copyCookies = (response: NextResponse) => {
@@ -74,7 +93,9 @@ export default async function middleware(req: NextRequest) {
 
   if (user && (pathname === "/" || pathname === "/sign-in")) {
     res.cookies.set({ name: REDIRECT_COOKIE, value: "", path: "/", maxAge: 0 });
-    const redirectResponse = NextResponse.redirect(new URL("/dashboard", url.origin));
+    const redirectResponse = NextResponse.redirect(
+      new URL("/dashboard", url.origin)
+    );
     return copyCookies(redirectResponse);
   }
 

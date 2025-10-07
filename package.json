@@ -18,7 +18,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "screenshot:cli": "playwright screenshot --wait-for-timeout=1500 http://localhost:3000/dashboard public/desktop.png",
-    "screenshot": "cross-env SCREENSHOT_MODE=1 NEXT_PUBLIC_SCREENSHOT_MODE=1 node scripts/screenshot.mjs",
+    "screenshot": "cross-env SCREENSHOT_MODE=1 NEXT_PUBLIC_SCREENSHOT_MODE=1 node scripts/capture-auth.mjs",
     "postinstall": "playwright install --with-deps"
   },
   "dependencies": {
