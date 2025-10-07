@@ -1,3 +1,6 @@
+# Skip if node_modules isn't installed
+[ -d node_modules ] || exit 0
+
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
