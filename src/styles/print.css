@@ -1,0 +1,8 @@
+/* tokens from PRD; refine later */
+@media print {
+  :root { --pt-base: 11pt; }
+  h1 { font-size: 24pt; }
+  h2 { font-size: 18pt; }
+  h3 { font-size: 14pt; }
+  a { text-decoration: underline; }
+}

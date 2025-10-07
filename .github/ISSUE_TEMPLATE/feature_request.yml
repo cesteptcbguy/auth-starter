@@ -1,0 +1,51 @@
+name: Feature request
+description: Propose a new feature or enhancement
+title: "[feat]: "
+labels: [type/feature]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What problem does this solve?
+      placeholder: As a [role], I want [...], so that [...]
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Pages/routes, data models, states, dependencies
+  - type: textarea
+    id: prd_refs
+    attributes:
+      label: PRD references
+      description: Link to PRD section(s) or list section numbers
+  - type: textarea
+    id: api
+    attributes:
+      label: API contracts
+      description: Endpoints, request/response examples, errors
+  - type: textarea
+    id: ui_states
+    attributes:
+      label: UI states
+      description: Loading, empty, error, success
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list of verifiable outcomes
+      placeholder: |
+        - [ ] Given/When/Then ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Definition of Ready
+      options:
+        - label: PRD section(s) referenced
+        - label: API I/O defined (request & response examples)
+        - label: UI states defined (empty/error/loading)
+        - label: Tests identified
