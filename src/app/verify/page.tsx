@@ -1,4 +1,3 @@
-// src/app/verify/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +11,7 @@ import {
   resolveRedirectPath,
   withRedirectParam,
 } from "@/lib/redirect";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -152,7 +151,7 @@ export default function VerifyPage() {
             type,
             token_hash_present: !!token_hash,
           });
-          const { error: vError } = await supabase.auth.verifyOtp({
+          const { error: vError } = await getSupabaseClient().auth.verifyOtp({
             type: type as EmailOtpTypeAllowed,
             token_hash,
           });

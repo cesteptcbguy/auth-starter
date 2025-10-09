@@ -1,27 +1,36 @@
 // src/app/collections/page.tsx
-import { createClient } from "@/lib/supabase/server";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { getServerSupabase } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import CreateCollection from "./_create";
 
 export default async function CollectionsPage() {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+
+  if (!user) {
     return (
       <main className="p-6">
-        <a className="underline" href="/sign-in">
+        <Link className="underline" href="/sign-in">
           Sign in
-        </a>
+        </Link>
       </main>
     );
+  }
 
   const { data } = await supabase
     .from("collections")
     .select("id,name,created_at")
     .order("created_at", { ascending: false });
+
+  // (optional) handle error state
+  // if (error) return <main className="p-6">Failed to load collections.</main>;
 
   return (
     <main className="p-6 space-y-6">

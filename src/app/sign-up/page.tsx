@@ -1,4 +1,3 @@
-// src/app/sign-up/page.tsx
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
@@ -8,7 +7,7 @@ import { toast } from "sonner";
 
 import { useRedirectTarget } from "@/hooks/useRedirectTarget";
 import { withRedirectParam } from "@/lib/redirect";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,7 +78,7 @@ export default function SignUpPage() {
       console.log("[signup] emailRedirectTo =", emailRedirectTo);
 
       try {
-        const { data: s } = await supabase.auth.getUser();
+        const { data: s } = await getSupabaseClient().auth.getUser();
         const currentEmail = s?.user?.email;
         if (currentEmail && currentEmail !== email) {
           console.log(
@@ -87,13 +86,13 @@ export default function SignUpPage() {
             currentEmail,
             "— signing out before new signup"
           );
-          await supabase.auth.signOut();
+          await getSupabaseClient().auth.signOut();
         }
       } catch (err) {
         console.warn("[signup] session check failed:", err);
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await getSupabaseClient().auth.signUp({
         email,
         password,
         options: { emailRedirectTo },

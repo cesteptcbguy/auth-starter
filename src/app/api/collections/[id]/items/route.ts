@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getRouteSupabase } from "@/lib/supabase/route";
 
 export async function POST(
   req: NextRequest,
@@ -16,7 +16,7 @@ export async function POST(
     );
 
   const collectionId = Number(id);
-  const supabase = await createClient();
+  const { supabase, res } = getRouteSupabase(req);
 
   // find next position
   const { data: posData } = await supabase
@@ -46,7 +46,7 @@ export async function POST(
       { status: 500 }
     );
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true }, { headers: res.headers });
 }
 
 export async function DELETE(
@@ -62,7 +62,7 @@ export async function DELETE(
       { status: 400 }
     );
 
-  const supabase = await createClient();
+  const { supabase, res } = getRouteSupabase(req);
   const { error } = await supabase
     .from("collection_items")
     .delete()
@@ -74,5 +74,5 @@ export async function DELETE(
       { ok: false, error: error.message },
       { status: 500 }
     );
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true }, { headers: res.headers });
 }

@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          # do NOT set cache: 'pnpm' here since pnpm isn't enabled yet
 
       - name: Enable Corepack & activate pinned pnpm
         run: |
@@ -26,7 +27,7 @@ jobs:
           corepack prepare pnpm@9.15.9 --activate
           pnpm --version
 
-      # Optional: cache pnpm store for faster installs
+      # Optional: cache pnpm store
       - name: Cache pnpm store
         uses: actions/cache@v4
         with:
@@ -37,6 +38,20 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Cache Playwright browsers
+      - name: Restore Playwright cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # Install Chromium browser for Playwright (no deprecated action)
+      - name: Install Playwright browsers
+        run: |
+          pnpm exec playwright install chromium
 
       - name: Typecheck
         run: pnpm typecheck
@@ -52,8 +67,8 @@ jobs:
         run: pnpm build:ci
 
       - name: Screenshot
+        if: ${{ github.event.pull_request.head.repo.fork == false || github.event_name != 'pull_request' }}
         env:
-          # Redundant but explicit; your script also sets these
           SCREENSHOT_MODE: "1"
           NEXT_PUBLIC_SCREENSHOT_MODE: "1"
           NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"

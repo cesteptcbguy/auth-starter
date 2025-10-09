@@ -1,15 +1,13 @@
-// src/app/sign-in/page.tsx
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRedirectTarget } from "@/hooks/useRedirectTarget";
 import { resolveRedirectPath, withRedirectParam } from "@/lib/redirect";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +32,6 @@ export default function SignInPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<FormMessage | null>(null);
   const [pending, setPending] = useState(false);
-  const router = useRouter();
 
   const { redirectTo, resolveRedirect } = useRedirectTarget();
   const isScreenshotMode = useMemo(
@@ -81,7 +78,7 @@ export default function SignInPage() {
 
     (async () => {
       try {
-        const { data } = await supabase.auth.getUser();
+        const { data } = await getSupabaseClient().auth.getUser();
         if (!cancelled && data?.user) {
           await navigateOnce();
         }
@@ -90,12 +87,14 @@ export default function SignInPage() {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
-      if (isScreenshotMode) return;
-      if (event === "SIGNED_IN") {
-        await navigateOnce();
+    const { data: sub } = getSupabaseClient().auth.onAuthStateChange(
+      async (event) => {
+        if (isScreenshotMode) return;
+        if (event === "SIGNED_IN") {
+          await navigateOnce();
+        }
       }
-    });
+    );
 
     return () => {
       cancelled = true;
@@ -118,7 +117,7 @@ export default function SignInPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await getSupabaseClient().auth.signInWithPassword({
       email,
       password,
     });

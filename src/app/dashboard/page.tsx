@@ -1,5 +1,9 @@
+// src/app/dashboard/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/supabase/server";
 import {
   deriveProfileInitial,
   deriveProfileName,
@@ -9,7 +13,7 @@ import {
 
 const isScreenshotMode = process.env.NEXT_PUBLIC_SCREENSHOT_MODE === "1";
 
-export default async function Dashboard() {
+export default async function DashboardPage() {
   // Screenshot / mock mode (auth bypassed by middleware)
   if (isScreenshotMode) {
     const email = "teacher@boldbuilder.app";
@@ -69,8 +73,8 @@ export default async function Dashboard() {
     );
   }
 
-  // Normal mode
-  const supabase = await createClient();
+  // Normal mode (server-side auth + profile)
+  const supabase = await getServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();

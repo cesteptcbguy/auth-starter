@@ -1,9 +1,12 @@
 // src/app/asset/[id]/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/supabase/server";
 import AddToCollection from "./_add-to-collection";
 
 type Asset = {
@@ -24,9 +27,9 @@ export default async function AssetPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = await params; // Next 15: params is a Promise
 
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const { data: asset, error } = await supabase
     .from("assets")
