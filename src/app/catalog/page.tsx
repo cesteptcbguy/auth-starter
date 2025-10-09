@@ -1,7 +1,10 @@
 // src/app/catalog/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +12,7 @@ import { Button } from "@/components/ui/button";
 type SearchParams = {
   q?: string;
   page?: string;
+  per?: string; // <-- add this
   discipline?: string;
   gradeBand?: string;
   mediaType?: string;
@@ -43,16 +47,58 @@ const asSort = (
   v === "newest" || v === "featured" || v === "relevance" ? v : undefined;
 
 async function fetchAssets(search: SearchParams): Promise<AssetsResponse> {
-  const qs = new URLSearchParams(
-    Object.entries(search).filter(
-      ([, v]) => v !== undefined && String(v).length > 0
-    ) as [string, string][]
-  );
-  const base = process.env.NEXT_PUBLIC_WEB_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/assets?${qs.toString()}`, {
-    cache: "no-store",
-  });
-  return (await res.json()) as AssetsResponse;
+  const supabase = await getServerSupabase();
+
+  const page = Math.max(1, Number(search.page ?? "1"));
+  const per = Math.min(48, Math.max(1, Number(search.per ?? "12"))); // <-- no any
+  const from = (page - 1) * per;
+  const to = from + per - 1;
+
+  let query = supabase
+    .from("assets")
+    .select(
+      "id, title, description, thumbnail_url, discipline, grade_bands, resource_types, genres, media_type, featured, featured_rank, created_at",
+      { count: "exact" }
+    )
+    .eq("status", "PUBLISHED");
+
+  const q = (search.q ?? "").trim();
+  if (q) {
+    const like = `%${q}%`;
+    query = query.or(`title.ilike.${like},description.ilike.${like}`);
+  }
+
+  if (search.discipline) query = query.eq("discipline", search.discipline);
+  if (search.gradeBand)
+    query = query.contains("grade_bands", [search.gradeBand]);
+  if (search.mediaType) query = query.eq("media_type", search.mediaType);
+  if (search.resourceType)
+    query = query.contains("resource_types", [search.resourceType]);
+  if (search.genre) query = query.contains("genres", [search.genre]);
+
+  const sort = search.sort ?? "newest";
+  if (sort === "featured") {
+    query = query
+      .order("featured", { ascending: false })
+      .order("featured_rank", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message);
+
+  return {
+    ok: true,
+    data: (data ?? []) as Asset[],
+    page,
+    per,
+    total: count ?? 0,
+    pageCount: count ? Math.ceil(count / per) : 0,
+  };
 }
 
 async function fetchLookups(): Promise<{
@@ -61,7 +107,7 @@ async function fetchLookups(): Promise<{
   resourceTypes: Lookup[];
   genres: Lookup[];
 }> {
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
   const [disciplines, gradeBands, resourceTypes, genres] = await Promise.all([
     supabase.from("disciplines").select("key,label").order("label"),
     supabase.from("grade_bands").select("key,label").order("min_grade"),
@@ -74,18 +120,6 @@ async function fetchLookups(): Promise<{
     resourceTypes: (resourceTypes.data ?? []) as Lookup[],
     genres: (genres.data ?? []) as Lookup[],
   };
-}
-
-function buildUrl(
-  nextParams: Record<string, string | number | undefined>,
-  current: SearchParams
-) {
-  const sp = new URLSearchParams();
-  const merged = { page: "1", sort: "newest", ...current, ...nextParams };
-  Object.entries(merged).forEach(([k, v]) => {
-    if (v !== undefined && String(v).length) sp.set(k, String(v));
-  });
-  return `/catalog?${sp.toString()}`;
 }
 
 // helper to coerce first value from Next 15's record
@@ -101,6 +135,7 @@ export default async function CatalogPage({
   const sp: SearchParams = {
     q: first(spIn.q),
     page: first(spIn.page),
+    per: first(spIn.per), // <-- pick up per
     discipline: first(spIn.discipline),
     gradeBand: first(spIn.gradeBand),
     mediaType: first(spIn.mediaType),
@@ -115,6 +150,18 @@ export default async function CatalogPage({
     fetchAssets(sp),
     fetchLookups(),
   ]);
+
+  function buildUrl(
+    nextParams: Record<string, string | number | undefined>,
+    current: SearchParams
+  ) {
+    const params = new URLSearchParams();
+    const merged = { page: "1", sort: "newest", ...current, ...nextParams };
+    Object.entries(merged).forEach(([k, v]) => {
+      if (v !== undefined && String(v).length) params.set(k, String(v));
+    });
+    return `/catalog?${params.toString()}`;
+  }
 
   return (
     <main className="p-6 space-y-6">
@@ -233,6 +280,7 @@ export default async function CatalogPage({
         ))}
       </section>
 
+      {/* Pagination */}
       {pageCount > 1 && (
         <div className="flex justify-center items-center gap-4">
           <Link

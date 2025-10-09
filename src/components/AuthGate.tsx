@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 type AuthGateProps = {
   children: ReactNode;
@@ -43,7 +43,7 @@ export default function AuthGate({ children }: AuthGateProps) {
     async function resolveSession() {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
 
       if (!isMounted) return;
 
@@ -57,7 +57,7 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     resolveSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = getSupabaseClient().auth.onAuthStateChange(
       (_event, session) => {
         if (!isMounted) return;
 
@@ -78,7 +78,10 @@ export default function AuthGate({ children }: AuthGateProps) {
 
   if (!checked || !hasSession) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center gap-2" aria-live="polite">
+      <div
+        className="flex min-h-[200px] items-center justify-center gap-2"
+        aria-live="polite"
+      >
         <Loader2 aria-hidden className="size-5 animate-spin" />
         <span className="text-sm font-medium">Checking your session…</span>
       </div>

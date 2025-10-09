@@ -1,10 +1,10 @@
 // src/app/api/assets/route.ts
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getRouteSupabase } from "@/lib/supabase/route";
 
 type Sort = "newest" | "featured" | "relevance";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const per = Math.min(
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   const from = (page - 1) * per;
   const to = from + per - 1;
 
-  const supabase = await createClient();
+  const { supabase, res } = getRouteSupabase(req);
 
   let query = supabase
     .from("assets")
@@ -30,12 +30,11 @@ export async function GET(req: Request) {
       "id, title, description, thumbnail_url, discipline, grade_bands, resource_types, genres, media_type, featured, featured_rank, created_at",
       { count: "exact" }
     )
-    // RLS already limits to PUBLISHED for anon, but make it explicit:
+    // RLS already limits to PUBLISHED for anon; keep explicit filter:
     .eq("status", "PUBLISHED");
 
   // Search
   if (q) {
-    // simple ilike on title OR description
     const like = `%${q}%`;
     query = query.or(`title.ilike.${like},description.ilike.${like}`);
   }
@@ -53,10 +52,8 @@ export async function GET(req: Request) {
       .order("featured", { ascending: false })
       .order("featured_rank", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
-  } else if (sort === "newest") {
-    query = query.order("created_at", { ascending: false });
   } else {
-    // "relevance" (fallback = newest for now)
+    // newest or relevance (fallback = newest)
     query = query.order("created_at", { ascending: false });
   }
 
@@ -68,16 +65,19 @@ export async function GET(req: Request) {
   if (error) {
     return NextResponse.json(
       { ok: false, error: error.message },
-      { status: 500 }
+      { status: 500, headers: res.headers }
     );
   }
 
-  return NextResponse.json({
-    ok: true,
-    data: data ?? [],
-    page,
-    per,
-    total: count ?? 0,
-    pageCount: count ? Math.ceil(count / per) : 0,
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      data: data ?? [],
+      page,
+      per,
+      total: count ?? 0,
+      pageCount: count ? Math.ceil(count / per) : 0,
+    },
+    { headers: res.headers }
+  );
 }

@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "build:ci": "cross-env NEXT_DISABLE_FONT_DOWNLOADS=1 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=test_anon_key next build",
+    "check:ci": "pnpm typecheck && pnpm lint && pnpm build:ci",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
@@ -19,7 +20,9 @@
     "test:e2e:report": "playwright show-report",
     "screenshot:cli": "playwright screenshot --wait-for-timeout=1500 http://localhost:3000/dashboard public/desktop.png",
     "screenshot": "cross-env SCREENSHOT_MODE=1 NEXT_PUBLIC_SCREENSHOT_MODE=1 node scripts/capture-auth.mjs",
-    "postinstall": "playwright install --with-deps"
+    "pw:install": "playwright install",
+    "pw:install:all": "playwright install chromium firefox webkit",
+    "postinstall": "if [ -n \"$VERCEL\" ] || [ -n \"$CI\" ]; then echo 'Skipping Playwright install on Vercel/CI'; else pnpm exec playwright install chromium; fi"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

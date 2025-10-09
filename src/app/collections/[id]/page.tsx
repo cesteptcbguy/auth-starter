@@ -1,7 +1,10 @@
 // src/app/collections/[id]/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import RemoveBtn from "./_remove";
 
@@ -26,7 +29,7 @@ type Collection = {
 type RawItem = {
   asset_id: number;
   position: number;
-  assets: AssetLite | AssetLite[]; // Supabase can return a single object or an array for the join
+  assets: AssetLite | AssetLite[];
 };
 
 export default async function CollectionDetail({
@@ -34,15 +37,15 @@ export default async function CollectionDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const collectionId = Number(id); // ← add this
+  const { id } = await params; // Next 15: params is a Promise
+  const collectionId = Number(id);
 
-  const supabase = await createClient();
+  const supabase = await getServerSupabase();
 
   const { data: collection } = await supabase
     .from("collections")
     .select("id,name")
-    .eq("id", collectionId) // ← use number
+    .eq("id", collectionId)
     .single<Collection>();
 
   if (!collection) {
@@ -62,7 +65,7 @@ export default async function CollectionDetail({
     .select(
       "asset_id, position, assets ( id, title, thumbnail_url, description )"
     )
-    .eq("collection_id", collectionId) // ← use number
+    .eq("collection_id", collectionId)
     .order("position", { ascending: true });
 
   const raw: RawItem[] = (itemsRaw ?? []) as RawItem[];
@@ -86,7 +89,7 @@ export default async function CollectionDetail({
         </p>
       ) : (
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((it: ItemRow) => (
+          {items.map((it) => (
             <Card key={it.asset_id} className="p-3">
               <Link href={`/asset/${it.assets.id}`}>
                 <div className="aspect-video rounded bg-gray-100 mb-3 overflow-hidden flex items-center justify-center">
