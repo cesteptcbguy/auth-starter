@@ -52,8 +52,8 @@ export default async function CollectionDetail({
     return (
       <main className="p-6">
         <p>Collection not found.</p>
-        <Link className="underline" href="/collections">
-          Back to collections
+        <Link className="underline" href="/dashboard">
+          Back to dashboard
         </Link>
       </main>
     );
@@ -77,8 +77,8 @@ export default async function CollectionDetail({
 
   return (
     <main className="p-6 space-y-6">
-      <Link href="/collections" className="underline text-sm">
-        ← Back to collections
+      <Link href="/dashboard" className="underline text-sm">
+        ← Back to dashboard
       </Link>
 
       <h1 className="text-2xl font-semibold">{collection.name}</h1>
@@ -91,7 +91,17 @@ export default async function CollectionDetail({
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((it) => (
             <Card key={it.asset_id} className="p-3">
-              <Link href={`/asset/${it.assets.id}`}>
+              <Link
+                href={{
+                  pathname: `/asset/${it.assets.id}`,
+                  query: {
+                    from: `/collections/${collectionId}`,
+                    ...(collection.name
+                      ? { fromLabel: collection.name }
+                      : {}),
+                  },
+                }}
+              >
                 <div className="aspect-video rounded bg-gray-100 mb-3 overflow-hidden flex items-center justify-center">
                   {it.assets.thumbnail_url ? (
                     <Image

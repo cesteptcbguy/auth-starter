@@ -17,6 +17,30 @@ export async function POST(
 
   const collectionId = Number(id);
   const { supabase, res } = getRouteSupabase(req);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: "auth" },
+      { status: 401, headers: res.headers }
+    );
+  }
+
+  const { data: collection, error: ownershipError } = await supabase
+    .from("collections")
+    .select("id")
+    .eq("id", collectionId)
+    .eq("owner_user_id", user.id)
+    .single();
+
+  if (ownershipError || !collection) {
+    return NextResponse.json(
+      { ok: false, error: "not found" },
+      { status: 404, headers: res.headers }
+    );
+  }
 
   // find next position
   const { data: posData } = await supabase
@@ -43,7 +67,7 @@ export async function POST(
   if (error && !error.message.toLowerCase().includes("duplicate")) {
     return NextResponse.json(
       { ok: false, error: error.message },
-      { status: 500 }
+      { status: 500, headers: res.headers }
     );
   }
   return NextResponse.json({ ok: true }, { headers: res.headers });
@@ -63,6 +87,31 @@ export async function DELETE(
     );
 
   const { supabase, res } = getRouteSupabase(req);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: "auth" },
+      { status: 401, headers: res.headers }
+    );
+  }
+
+  const { data: collection, error: ownershipError } = await supabase
+    .from("collections")
+    .select("id")
+    .eq("id", Number(id))
+    .eq("owner_user_id", user.id)
+    .single();
+
+  if (ownershipError || !collection) {
+    return NextResponse.json(
+      { ok: false, error: "not found" },
+      { status: 404, headers: res.headers }
+    );
+  }
+
   const { error } = await supabase
     .from("collection_items")
     .delete()
@@ -72,7 +121,7 @@ export async function DELETE(
   if (error)
     return NextResponse.json(
       { ok: false, error: error.message },
-      { status: 500 }
+      { status: 500, headers: res.headers }
     );
   return NextResponse.json({ ok: true }, { headers: res.headers });
 }

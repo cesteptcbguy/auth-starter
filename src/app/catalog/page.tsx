@@ -46,6 +46,112 @@ const asSort = (
 ): "newest" | "featured" | "relevance" | undefined =>
   v === "newest" || v === "featured" || v === "relevance" ? v : undefined;
 
+const formatTaxonomyLabel = (value: string | null | undefined) => {
+  if (!value) return "";
+  return value
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((segment) => {
+      const lower = segment.toLowerCase();
+      if (lower.length === 0) return segment;
+      return lower.replace(/^\w/, (char) => char.toUpperCase());
+    })
+    .join(" ");
+};
+
+function PlaceholderThumbnail({ title }: { title: string }) {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-400">
+      <svg
+        aria-hidden="true"
+        className="h-8 w-8"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <path d="m3 16 5-5 4 4 5-5 4 4" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+      </svg>
+      <span className="text-xs font-medium">{title.slice(0, 40) || "Preview unavailable"}</span>
+    </div>
+  );
+}
+
+type FilterKey = "discipline" | "gradeBand" | "resourceType" | "genre";
+
+function FilterChip({
+  href,
+  label,
+  isActive,
+}: {
+  href: string;
+  label: string;
+  isActive: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      role="button"
+      aria-pressed={isActive}
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400 ${
+        isActive
+          ? "border-gray-900 bg-gray-900 text-white"
+          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function FilterChipGroup({
+  label,
+  options,
+  currentValue,
+  buildUrl,
+  paramKey,
+}: {
+  label: string;
+  options: Lookup[];
+  currentValue?: string;
+  buildUrl: (
+    nextParams: Partial<Record<FilterKey | "page", string | undefined>>
+  ) => string;
+  paramKey: FilterKey;
+}) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-sm font-semibold text-gray-700">{label}</h2>
+      <div className="flex flex-wrap gap-2">
+        <FilterChip
+          href={buildUrl({ [paramKey]: undefined })}
+          label="All"
+          isActive={!currentValue}
+        />
+        {options.map((option) => {
+          const value = option.key;
+          const isActive = currentValue === value;
+          return (
+            <FilterChip
+              key={value}
+              href={buildUrl({
+                [paramKey]: isActive ? undefined : value,
+              })}
+              label={formatTaxonomyLabel(option.label)}
+              isActive={isActive}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 async function fetchAssets(search: SearchParams): Promise<AssetsResponse> {
   const supabase = await getServerSupabase();
 
@@ -167,117 +273,199 @@ export default async function CatalogPage({
     <main className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Catalog</h1>
 
-      <form className="grid grid-cols-1 md:grid-cols-6 gap-3" action="/catalog">
+      <form
+        className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white/60 p-4 shadow-sm sm:flex-row sm:items-center"
+        action="/catalog"
+      >
         <Input
           name="q"
           placeholder="Search title or description…"
           defaultValue={sp.q || ""}
-          className="md:col-span-2"
+          className="sm:flex-1"
         />
 
         <select
-          name="discipline"
-          defaultValue={sp.discipline || ""}
-          className="border rounded px-3 py-2"
+          name="sort"
+          defaultValue={sort}
+          className="rounded-md border border-gray-200 px-3 py-2 text-sm"
         >
-          <option value="">All disciplines</option>
-          {lookups.disciplines.map((d: Lookup) => (
-            <option key={d.key} value={d.key}>
-              {d.label}
-            </option>
-          ))}
+          <option value="newest">Newest</option>
+          <option value="featured">Featured</option>
+          <option value="relevance">Relevance</option>
         </select>
-
-        <select
-          name="gradeBand"
-          defaultValue={sp.gradeBand || ""}
-          className="border rounded px-3 py-2"
+        <Button type="submit" className="shrink-0">
+          Search
+        </Button>
+        <Link
+          href="/catalog"
+          className="text-sm font-semibold text-gray-600 underline"
         >
-          <option value="">All grade bands</option>
-          {lookups.gradeBands.map((g: Lookup) => (
-            <option key={g.key} value={g.key}>
-              {g.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="resourceType"
-          defaultValue={sp.resourceType || ""}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">All resource types</option>
-          {lookups.resourceTypes.map((r: Lookup) => (
-            <option key={r.key} value={r.key}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="genre"
-          defaultValue={sp.genre || ""}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">All genres</option>
-          {lookups.genres.map((g: Lookup) => (
-            <option key={g.key} value={g.key}>
-              {g.label}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex gap-2 items-center">
-          <select
-            name="sort"
-            defaultValue={sort}
-            className="border rounded px-3 py-2"
-          >
-            <option value="newest">Newest</option>
-            <option value="featured">Featured</option>
-            <option value="relevance">Relevance</option>
-          </select>
-          <Button type="submit">Apply</Button>
-          <Link href="/catalog" className="underline">
-            Reset
-          </Link>
-        </div>
+          Reset
+        </Link>
       </form>
 
-      <div className="text-sm text-muted-foreground">
-        {total} result{total === 1 ? "" : "s"}
+      <div className="space-y-4">
+        <FilterChipGroup
+          label="Discipline"
+          options={lookups.disciplines}
+          currentValue={sp.discipline}
+          paramKey="discipline"
+          buildUrl={(next) => buildUrl(next, sp)}
+        />
+        <FilterChipGroup
+          label="Grade Band"
+          options={lookups.gradeBands}
+          currentValue={sp.gradeBand}
+          paramKey="gradeBand"
+          buildUrl={(next) => buildUrl(next, sp)}
+        />
+        <FilterChipGroup
+          label="Resource Type"
+          options={lookups.resourceTypes}
+          currentValue={sp.resourceType}
+          paramKey="resourceType"
+          buildUrl={(next) => buildUrl(next, sp)}
+        />
+        <FilterChipGroup
+          label="Genre"
+          options={lookups.genres}
+          currentValue={sp.genre}
+          paramKey="genre"
+          buildUrl={(next) => buildUrl(next, sp)}
+        />
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data?.map((a: Asset) => (
-          <Link key={a.id} href={`/asset/${a.id}`}>
-            <Card className="p-3 hover:shadow-md transition">
-              <div className="aspect-video bg-gray-100 rounded mb-3 overflow-hidden flex items-center justify-center">
-                {a.thumbnail_url ? (
-                  <Image
-                    src={a.thumbnail_url}
-                    alt={a.title}
-                    width={640}
-                    height={360}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <span className="text-xs text-gray-500">No thumbnail</span>
-                )}
-              </div>
-              <h3 className="font-medium">{a.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {a.description}
-              </p>
-              <div className="mt-2 text-xs text-gray-500">
-                <span>{a.discipline}</span>
-                {a.grade_bands?.length ? (
-                  <span> • {a.grade_bands.join(", ")}</span>
+      <div className="text-sm font-medium text-muted-foreground">
+        {`${total} ${total === 1 ? "result" : "results"}`}
+      </div>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {data?.map((a: Asset) => {
+          const disciplineSlug = a.discipline ?? undefined;
+          const gradeSlugs = a.grade_bands ?? [];
+          const resourceSlugs = a.resource_types ?? [];
+          const genreSlugs = a.genres ?? [];
+
+          const chips: {
+            key: string;
+            label: string;
+            href: string;
+            isActive: boolean;
+          }[] = [];
+
+          if (disciplineSlug) {
+            const isActive = sp.discipline === disciplineSlug;
+            chips.push({
+              key: `discipline-${disciplineSlug}`,
+              label: formatTaxonomyLabel(disciplineSlug),
+              href: buildUrl(
+                {
+                  discipline: isActive ? undefined : disciplineSlug,
+                },
+                sp
+              ),
+              isActive,
+            });
+          }
+
+          gradeSlugs.forEach((value) => {
+            const isActive = sp.gradeBand === value;
+            chips.push({
+              key: `grade-${value}`,
+              label: formatTaxonomyLabel(value),
+              href: buildUrl(
+                {
+                  gradeBand: isActive ? undefined : value,
+                },
+                sp
+              ),
+              isActive,
+            });
+          });
+
+          resourceSlugs.forEach((value) => {
+            const isActive = sp.resourceType === value;
+            chips.push({
+              key: `resource-${value}`,
+              label: formatTaxonomyLabel(value),
+              href: buildUrl(
+                {
+                  resourceType: isActive ? undefined : value,
+                },
+                sp
+              ),
+              isActive,
+            });
+          });
+
+          genreSlugs.forEach((value) => {
+            const isActive = sp.genre === value;
+            chips.push({
+              key: `genre-${value}`,
+              label: formatTaxonomyLabel(value),
+              href: buildUrl(
+                {
+                  genre: isActive ? undefined : value,
+                },
+                sp
+              ),
+              isActive,
+            });
+          });
+
+          return (
+            <Card key={a.id} className="flex h-full flex-col p-3 transition hover:shadow-md">
+              <Link
+                href={{
+                  pathname: `/asset/${a.id}`,
+                  query: { from: "/catalog" },
+                }}
+                className="block"
+              >
+                <div className="aspect-video overflow-hidden rounded bg-gray-100">
+                  {a.thumbnail_url ? (
+                    <Image
+                      src={a.thumbnail_url}
+                      alt={a.title}
+                      width={640}
+                      height={360}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <PlaceholderThumbnail title={a.title} />
+                  )}
+                </div>
+                <h3 className="mt-3 text-base font-semibold text-gray-900">
+                  {a.title}
+                </h3>
+                {a.description ? (
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {a.description}
+                  </p>
                 ) : null}
-              </div>
+              </Link>
+              {chips.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {chips.map((chip) => (
+                    <Link
+                      key={chip.key}
+                      href={chip.href}
+                      role="button"
+                      aria-pressed={chip.isActive}
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400 ${
+                        chip.isActive
+                          ? "border-gray-900 bg-gray-900 text-white"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {chip.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
             </Card>
-          </Link>
-        ))}
+          );
+        })}
       </section>
 
       {/* Pagination */}
