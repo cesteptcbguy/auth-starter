@@ -7,54 +7,64 @@ const REDIRECT_COOKIE_MAX_AGE = 60 * 5; // 5 minutes
 
 export default async function middleware(req: NextRequest) {
   const res = NextResponse.next();
+  const url = new URL(req.url);
+  const hostname = url.hostname;
+  let pathname = url.pathname.replace(/\/+$/, "") || "/";
+  const search = url.search;
 
+  // Local-only screenshot bypass
   const isScreenshotMode =
     process.env.SCREENSHOT_MODE === "1" ||
     process.env.NEXT_PUBLIC_SCREENSHOT_MODE === "1";
+  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+  if (isScreenshotMode && isLocalhost) {
+    return res;
+  }
+
+  // Only guard protected paths
+  const protectedPaths = ["/dashboard", "/collections", "/catalog"];
+  const isProtected = protectedPaths.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
 
   const SUPA_URL =
     process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const SUPA_KEY =
     process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const url = new URL(req.url);
-  const { pathname, search } = url;
-  const protectedPaths = ["/dashboard", "/collections"];
-  const isProtected = protectedPaths.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
-
-  if (isScreenshotMode) return res;
-  if (!SUPA_URL || !SUPA_KEY) {
-    console.warn("[middleware] Missing Supabase env; skipping auth guard");
-    return res;
+  // If protected and Supabase envs are missing, force sign-in redirect
+  if (isProtected && (!SUPA_URL || !SUPA_KEY)) {
+    const target = `${pathname}${search || ""}`;
+    const signInUrl = new URL("/sign-in", url.origin);
+    signInUrl.searchParams.set("redirectTo", target);
+    return NextResponse.redirect(signInUrl, 303);
   }
 
   let user: { id: string } | null = null;
-  try {
-    const supabase = createServerClient(SUPA_URL, SUPA_KEY, {
-      // In Next.js MIDDLEWARE, @supabase/ssr expects getAll/setAll
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(
-          cookies: { name: string; value: string; options: CookieOptions }[]
-        ) {
-          cookies.forEach(({ name, value, options }) => {
-            res.cookies.set({ name, value, ...options });
-          });
-        },
-      },
-    });
 
-    const { data, error } = await supabase.auth.getUser();
-    if (error) {
-      if (!/refresh token not found/i.test(error.message)) {
+  try {
+    if (SUPA_URL && SUPA_KEY) {
+      const supabase = createServerClient(SUPA_URL, SUPA_KEY, {
+        // In Next.js Middleware, @supabase/ssr expects getAll/setAll
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll(
+            cookies: { name: string; value: string; options: CookieOptions }[]
+          ) {
+            cookies.forEach(({ name, value, options }) => {
+              res.cookies.set({ name, value, ...options });
+            });
+          },
+        },
+      });
+
+      const { data, error } = await supabase.auth.getUser();
+      if (!error) user = data.user ?? null;
+      else if (!/refresh token not found/i.test(error.message)) {
         console.warn("[middleware] auth.getUser error:", error.message);
       }
-    } else {
-      user = data.user ?? null;
     }
   } catch (e) {
     console.error("[middleware] unexpected error:", e);
@@ -65,6 +75,7 @@ export default async function middleware(req: NextRequest) {
     return response;
   };
 
+  // Redirect unauthenticated users away from protected pages
   if (!user && isProtected) {
     const target = `${pathname}${search || ""}`;
     const signInUrl = new URL("/sign-in", url.origin);
@@ -82,7 +93,11 @@ export default async function middleware(req: NextRequest) {
     return copyCookies(NextResponse.redirect(signInUrl, 303));
   }
 
-  if (user && (pathname === "/" || pathname === "/sign-in")) {
+  // Redirect authenticated users away from public entry points
+  if (
+    user &&
+    (pathname === "/" || pathname === "/sign-in" || pathname === "/sign-up")
+  ) {
     res.cookies.set({ name: REDIRECT_COOKIE, value: "", path: "/", maxAge: 0 });
     return copyCookies(
       NextResponse.redirect(new URL("/dashboard", url.origin), 303)
@@ -94,11 +109,6 @@ export default async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/",
-    "/sign-in",
-    "/dashboard",
-    "/dashboard/:path*",
-    "/collections",
-    "/collections/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|ttf|woff|woff2)).*)",
   ],
 };
