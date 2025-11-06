@@ -1,5 +1,5 @@
 {
-  "name": "boldbuilder",
+  "name": "kaeo-item-bank-app-suite",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -22,7 +22,7 @@
     "screenshot": "cross-env SCREENSHOT_MODE=1 NEXT_PUBLIC_SCREENSHOT_MODE=1 node scripts/capture-auth.mjs",
     "pw:install": "playwright install",
     "pw:install:all": "playwright install chromium firefox webkit",
-    "postinstall": "if [ -n \"$VERCEL\" ] || [ -n \"$CI\" ]; then echo 'Skipping Playwright install on Vercel/CI'; else pnpm exec playwright install chromium; fi"
+    "postinstall": "if [ -n \"VERCEL\" ] || [ -n \"CI\" ]; then echo 'Skipping Playwright install on Vercel/CI'; else pnpm exec playwright install chromium; fi"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

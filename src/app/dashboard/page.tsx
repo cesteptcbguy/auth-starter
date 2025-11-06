@@ -10,8 +10,6 @@ import {
   getCurrentUserProfile,
   upsertUserProfile,
 } from "@/lib/profile";
-import CollectionsGrid from "@/components/collections/CollectionsGrid";
-import CreateCollection from "@/app/collections/_create";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 
 const isScreenshotMode = process.env.NEXT_PUBLIC_SCREENSHOT_MODE === "1";
@@ -22,11 +20,6 @@ export default async function DashboardPage() {
     const email = "teacher@boldbuilder.app";
     const displayName = "Jordan Teacher";
     const displayInitial = displayName.charAt(0);
-    const demoCollections = [
-      { id: "col_1001", name: "Spring Launch", created_at: null },
-      { id: "col_1002", name: "STEM Workshops", created_at: null },
-      { id: "col_1003", name: "Teacher Favorites", created_at: null },
-    ];
 
     return (
       <main className="min-h-screen bg-background">
@@ -77,14 +70,6 @@ export default async function DashboardPage() {
             </article>
           </div>
         </section>
-
-        <section className="mx-auto max-w-5xl space-y-4 px-6 pb-12">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">My Collections</h2>
-            <CreateCollection />
-            <CollectionsGrid collections={demoCollections} />
-          </div>
-        </section>
       </main>
     );
   }
@@ -108,17 +93,6 @@ export default async function DashboardPage() {
 
   const displayName = deriveProfileName(profile);
   const displayInitial = deriveProfileInitial(profile);
-  const {
-    data: collections,
-    error: collectionsError,
-  } = await supabase
-    .from("collections")
-    .select("id,name,created_at")
-    .order("created_at", { ascending: false });
-
-  if (collectionsError) {
-    console.error("[dashboard] Failed to load collections:", collectionsError);
-  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -147,11 +121,6 @@ export default async function DashboardPage() {
       <section className="mx-auto max-w-5xl space-y-4 px-6 py-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back, {displayName}.</p>
-        <div className="space-y-4 pt-6">
-          <h2 className="text-xl font-semibold">My Collections</h2>
-          <CreateCollection />
-          <CollectionsGrid collections={collections} />
-        </div>
       </section>
     </main>
   );

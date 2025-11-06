@@ -138,7 +138,6 @@ export default function SignInPage() {
   }
 
   const resetHref = withRedirectParam("/reset-password", redirectTo);
-  const signUpHref = withRedirectParam("/sign-up", redirectTo);
 
   return (
     <main className="mx-auto max-w-sm space-y-5 p-6">
@@ -216,12 +215,6 @@ export default function SignInPage() {
         <p>
           <Link className="underline" href={resetHref}>
             Forgot password?
-          </Link>
-        </p>
-        <p>
-          Need an account?{" "}
-          <Link className="underline" href={signUpHref}>
-            Create one
           </Link>
         </p>
         <p>

@@ -9,8 +9,8 @@ import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: {
-    default: "BoldBuilder",
-    template: "%s | BoldBuilder",
+    default: "KĀʻEO Item Bank App Suite",
+    template: "%s | KĀʻEO Item Bank App Suite",
   },
   description:
     "Tools for curating education content, managing collections, and publishing catalogs.",
