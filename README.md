@@ -1,4 +1,4 @@
-# BoldBuilder
+# KĀʻEO Item Bank App Suite
 
 [![CI](https://github.com/cesteptcbguy/boldbuilder/actions/workflows/ci.yml/badge.svg)](https://github.com/cesteptcbguy/boldbuilder/actions/workflows/ci.yml)
 

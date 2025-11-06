@@ -1,5 +1,5 @@
 -- =========================================
--- BoldBuilder schema (idempotent-safe)
+-- KĀʻEO Item Bank App Suite schema (idempotent-safe)
 -- =========================================
 
 -- Extensions needed by indexes/types
