@@ -1,3 +1,4 @@
+// src/app/api/redirect-fallback/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 

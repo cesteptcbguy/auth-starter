@@ -22,7 +22,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Only guard protected paths
-  const protectedPaths = ["/dashboard", "/collections", "/catalog"];
+  const protectedPaths = ["/dashboard"];
   const isProtected = protectedPaths.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
