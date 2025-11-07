@@ -9,10 +9,10 @@ import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: {
-    default: "KĀʻEO Item Bank App Suite",
-    template: "%s | KĀʻEO Item Bank App Suite",
+    default: "KĀʻEO Auth Starter",
+    template: "%s | KĀʻEO Auth Starter",
   },
-  description: "Tools for KĀʻEO Item Bank.",
+  description: "Minimal Supabase auth starter with sign-in, reset, and dashboard.",
 };
 
 export default function RootLayout({

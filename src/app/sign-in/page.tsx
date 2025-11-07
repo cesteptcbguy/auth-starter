@@ -218,7 +218,7 @@ export default function SignInPage() {
           </Link>
         </p>
         <p>
-          <Link className="text-muted-foreground underline" href="/">
+          <Link className="text-foreground/80 underline" href="/">
             Back home
           </Link>
         </p>
