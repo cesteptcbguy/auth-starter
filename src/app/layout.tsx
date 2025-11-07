@@ -12,8 +12,7 @@ export const metadata: Metadata = {
     default: "KĀʻEO Item Bank App Suite",
     template: "%s | KĀʻEO Item Bank App Suite",
   },
-  description:
-    "Tools for curating education content, managing collections, and publishing catalogs.",
+  description: "Tools for KĀʻEO Item Bank.",
 };
 
 export default function RootLayout({
