@@ -2,16 +2,12 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppWindow } from "lucide-react";
 
 import { getServerSupabase } from "@/lib/supabase/server";
-import {
-  deriveProfileInitial,
-  deriveProfileName,
-  getCurrentUserProfile,
-  upsertUserProfile,
-} from "@/lib/profile";
+import { getCurrentUserProfile, upsertUserProfile } from "@/lib/profile";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { Button } from "@/components/ui/button";
 
@@ -38,9 +34,52 @@ function AppCard({ title }: { title: string }) {
         <h2 className="flex-1 text-lg font-semibold">{title}</h2>
       </div>
       <div className="flex-1" />
-      <Button className="mt-4">Open</Button>
+      <Button variant="secondary" className="mt-4">
+        Open
+      </Button>
     </article>
   );
+}
+
+// ---- name/initial resolver (type-safe with loose profile) ----
+type LooseProfile =
+  | {
+      full_name?: string | null;
+      name?: string | null;
+      email?: string | null;
+    }
+  | null
+  | undefined;
+
+function resolveNameAndInitial(args: {
+  user: {
+    email: string | null;
+    user_metadata?: Record<string, unknown> | null | undefined;
+  };
+  profile?: LooseProfile;
+}) {
+  const { user, profile } = args;
+
+  const meta = (user.user_metadata ?? {}) as {
+    first_name?: string;
+    last_name?: string;
+    full_name?: string;
+  };
+
+  const first = (meta.first_name || "").trim();
+  const last = (meta.last_name || "").trim();
+  const metaFull = (meta.full_name || "").trim();
+
+  const fullName =
+    [first, last].filter(Boolean).join(" ").trim() ||
+    metaFull ||
+    (profile?.full_name ?? "") ||
+    (profile?.name ?? "") ||
+    user.email ||
+    "Account";
+
+  const initial = fullName.charAt(0).toUpperCase() || "A";
+  return { displayName: fullName, displayInitial: initial };
 }
 
 export default async function DashboardPage() {
@@ -61,9 +100,14 @@ export default async function DashboardPage() {
               <p className="text-sm font-medium">{email}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground">
+              {/* Avatar dot — link to /profile */}
+              <Link
+                href="/profile"
+                aria-label="Profile"
+                className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground"
+              >
                 {displayInitial}
-              </div>
+              </Link>
               <div className="text-right">
                 <p className="text-sm font-medium">{displayName}</p>
                 <p className="text-xs text-foreground/70">Admin</p>
@@ -98,14 +142,19 @@ export default async function DashboardPage() {
   // Try to read the profile
   let { profile } = await getCurrentUserProfile(supabase, user.id);
 
-  // If missing, create it and try again
+  // If missing, create it and try again (keeps email available for header)
   if (!profile && user.email) {
     await upsertUserProfile(supabase, { id: user.id, email: user.email });
     ({ profile } = await getCurrentUserProfile(supabase, user.id));
   }
 
-  const displayName = deriveProfileName(profile);
-  const displayInitial = deriveProfileInitial(profile);
+  const { displayName, displayInitial } = resolveNameAndInitial({
+    user: {
+      email: user.email ?? null,
+      user_metadata: user.user_metadata ?? {},
+    },
+    profile, // may be null/undefined; helper handles it
+  });
 
   return (
     <main className="min-h-screen bg-background">
@@ -120,12 +169,23 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground">
+            {/* Avatar dot — link to /profile (same size and color as before) */}
+            <Link
+              href="/profile"
+              aria-label="Profile"
+              className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground"
+            >
               {displayInitial}
-            </div>
+            </Link>
             <div className="text-right">
-              <p className="text-sm font-medium">{displayName}</p>
-              <SignOutButton className="text-xs font-medium text-primary underline-offset-4 hover:underline" />
+              <Link href="/profile">
+                <p className="text-sm font-medium">
+                  <button className="rounded-md text-accent underline-offset-4 hover:underline">
+                    {displayName}
+                  </button>
+                </p>
+              </Link>
+              <SignOutButton />
             </div>
           </div>
         </div>

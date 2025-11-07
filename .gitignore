@@ -41,5 +41,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# scripts
-/scripts/create-users.ts
+# docs (generated screenshots)
+/docs/
