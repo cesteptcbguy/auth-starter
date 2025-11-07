@@ -5,10 +5,14 @@ import { Toaster } from "sonner";
 
 // import the local fonts
 import { Inter, GeistSans, GeistMono } from "./fonts";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Bold Builder",
-  description: "by Christopher Estep at Bold Bear Publishing",
+  title: {
+    default: "KĀʻEO Auth Starter",
+    template: "%s | KĀʻEO Auth Starter",
+  },
+  description: "Minimal Supabase auth starter with sign-in, reset, and dashboard.",
 };
 
 export default function RootLayout({
@@ -21,8 +25,11 @@ export default function RootLayout({
       lang="en"
       className={`${Inter.className} ${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="antialiased">
-        {children}
+      <body className="antialiased bg-background">
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <div className="flex-1">{children}</div>
+        </div>
         <Toaster richColors position="top-right" />
       </body>
     </html>

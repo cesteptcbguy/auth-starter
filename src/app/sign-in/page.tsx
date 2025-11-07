@@ -1,4 +1,4 @@
-// src/app/sign-in/page.tsx
+// app/sign-in/page.tsx
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -7,8 +7,8 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRedirectTarget } from "@/hooks/useRedirectTarget";
-import { resolveRedirectPath, withRedirectParam } from "@/lib/redirect";
-import { supabase } from "@/lib/supabase/client";
+import { resolveRedirectPath } from "@/lib/redirect";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,7 +79,7 @@ export default function SignInPage() {
 
     (async () => {
       try {
-        const { data } = await supabase.auth.getUser();
+        const { data } = await getSupabaseClient().auth.getUser();
         if (!cancelled && data?.user) {
           await navigateOnce();
         }
@@ -88,12 +88,14 @@ export default function SignInPage() {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
-      if (isScreenshotMode) return;
-      if (event === "SIGNED_IN") {
-        await navigateOnce();
+    const { data: sub } = getSupabaseClient().auth.onAuthStateChange(
+      async (event) => {
+        if (isScreenshotMode) return;
+        if (event === "SIGNED_IN") {
+          await navigateOnce();
+        }
       }
-    });
+    );
 
     return () => {
       cancelled = true;
@@ -116,7 +118,7 @@ export default function SignInPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await getSupabaseClient().auth.signInWithPassword({
       email,
       password,
     });
@@ -135,14 +137,17 @@ export default function SignInPage() {
     setPending(false);
   }
 
-  const resetHref = withRedirectParam("/reset-password", redirectTo);
-  const signUpHref = withRedirectParam("/sign-up", redirectTo);
+  // Typed-routes–safe Link target for reset password
+  const resetHref =
+    redirectTo && redirectTo.trim()
+      ? ({ pathname: "/reset-password", query: { redirectTo } } as const)
+      : "/reset-password";
 
   return (
     <main className="mx-auto max-w-sm space-y-5 p-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground/80">
           Welcome back! Enter your credentials to continue.
         </p>
       </header>
@@ -217,13 +222,7 @@ export default function SignInPage() {
           </Link>
         </p>
         <p>
-          Need an account?{" "}
-          <Link className="underline" href={signUpHref}>
-            Create one
-          </Link>
-        </p>
-        <p>
-          <Link className="text-muted-foreground underline" href="/">
+          <Link className="text-foreground/80 underline" href="/">
             Back home
           </Link>
         </p>

@@ -1,6 +1,3 @@
-# Skip if node_modules isn't installed
-[ -d node_modules ] || exit 0
-
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
@@ -16,4 +13,5 @@ fi
 command -v corepack >/dev/null 2>&1 && corepack enable >/dev/null 2>&1 || true
 
 echo "▶ Running project checks (typecheck + lint + build)…"
+pnpm rimraf .next
 pnpm typecheck && pnpm lint && pnpm build
