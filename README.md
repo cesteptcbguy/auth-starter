@@ -1,4 +1,4 @@
-# KĀʻEO Auth Starter
+# Christopher Estep Auth Starter
 
 [![CI](https://github.com/cesteptcbguy/boldbuilder/actions/workflows/ci.yml/badge.svg)](https://github.com/cesteptcbguy/boldbuilder/actions/workflows/ci.yml)
 
