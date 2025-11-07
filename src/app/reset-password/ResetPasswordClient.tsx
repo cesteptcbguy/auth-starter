@@ -3,15 +3,12 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRedirectTarget } from "@/hooks/useRedirectTarget";
-import {
-  getWebOrigin,
-  resolveRedirectPath,
-  withRedirectParam,
-} from "@/lib/redirect";
+import { getWebOrigin, resolveRedirectPath } from "@/lib/redirect";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -22,8 +19,21 @@ const EMAIL_PATTERN = /.+@.+\..+/i;
 const MIN_PASSWORD_LENGTH = 8;
 
 type FormMessage = { type: "error" | "success"; text: string };
-
 type RedirectHook = ReturnType<typeof useRedirectTarget>;
+
+// Helpers for typed routes
+function signInUrlObject(redirect?: string | null) {
+  return redirect && redirect.trim()
+    ? ({ pathname: "/sign-in", query: { redirectTo: redirect } } as const)
+    : "/sign-in";
+}
+function signInRoute(redirect?: string | null): Route {
+  const q =
+    redirect && redirect.trim()
+      ? `?redirectTo=${encodeURIComponent(redirect)}`
+      : "";
+  return `/sign-in${q}` as Route;
+}
 
 export default function ResetPasswordClient() {
   const searchParams = useSearchParams();
@@ -37,7 +47,9 @@ export default function ResetPasswordClient() {
   );
 
   const shouldShowUpdate =
-    modeParam === "update" || typeParam === "recovery" || !!searchParams?.get("access_token");
+    modeParam === "update" ||
+    typeParam === "recovery" ||
+    !!searchParams?.get("access_token");
 
   if (shouldShowUpdate) {
     return (
@@ -122,7 +134,7 @@ function RequestResetForm({
     setPending(false);
   }
 
-  const signInHref = withRedirectParam("/sign-in", redirectTo);
+  const signInHref = signInUrlObject(redirectTo);
 
   return (
     <main className="mx-auto max-w-sm space-y-5 p-6">
@@ -264,10 +276,10 @@ function UpdatePasswordForm({
     const resolved = resolveRedirectPath(
       (await resolveRedirect()) ?? redirectTo ?? null
     );
-    router.replace(withRedirectParam("/sign-in", resolved));
+    router.replace(signInRoute(resolved));
   }
 
-  const signInHref = withRedirectParam("/sign-in", redirectTo);
+  const signInHref = signInUrlObject(redirectTo);
   const canContinue = message?.type === "success";
 
   return (

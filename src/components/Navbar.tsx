@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import type { Route } from "next";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 type NavItem = {
-  href: string;
+  href: Route;
   label: string;
   authOnly?: boolean;
 };
@@ -57,9 +58,11 @@ export default function Navbar() {
 
         <div className="flex flex-wrap items-center gap-3">
           {links.map((item) => {
+            const hrefStr = item.href as string;
             const isActive =
-              pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+              pathname === hrefStr ||
+              (hrefStr !== "/" && pathname.startsWith(`${hrefStr}/`));
+
             return (
               <Link
                 key={item.href}
