@@ -30,7 +30,7 @@ const appModules = [
 
 function AppCard({ title }: { title: string }) {
   return (
-    <article className="flex flex-col rounded-lg border bg-card p-4">
+    <article className="flex flex-col rounded-lg border bg-card p-4 text-card-foreground">
       <div className="flex items-center gap-4">
         <div className="rounded-lg bg-primary p-3 text-primary-foreground">
           <AppWindow className="size-6" />
@@ -38,7 +38,7 @@ function AppCard({ title }: { title: string }) {
         <h2 className="flex-1 text-lg font-semibold">{title}</h2>
       </div>
       <div className="flex-1" />
-      <Button variant="kaeo" className="mt-4">Open</Button>
+      <Button className="mt-4">Open</Button>
     </article>
   );
 }
@@ -55,18 +55,18 @@ export default async function DashboardPage() {
         <header className="border-b bg-card/60">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs uppercase tracking-wide text-foreground/70">
                 Signed in as
               </p>
               <p className="text-sm font-medium">{email}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+              <div className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground">
                 {displayInitial}
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium">{displayName}</p>
-                <p className="text-xs text-muted-foreground">Admin</p>
+                <p className="text-xs text-foreground/70">Admin</p>
               </div>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
 
         <section className="mx-auto max-w-5xl space-y-4 px-6 py-8">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <p className="text-foreground/80">
             Welcome back, {displayName}. Here are your available app modules.
           </p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
       <header className="border-b bg-card/60">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs uppercase tracking-wide text-foreground/70">
               Signed in as
             </p>
             <p className="text-sm font-medium">
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+            <div className="flex size-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-secondary-foreground">
               {displayInitial}
             </div>
             <div className="text-right">
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
 
       <section className="mx-auto max-w-5xl space-y-4 px-6 py-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <p className="text-foreground/80">
           Welcome back, {displayName}. Here are your available app modules.
         </p>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
