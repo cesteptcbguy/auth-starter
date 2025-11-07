@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { redirect } from "next/navigation";
+import { AppWindow } from "lucide-react";
+
 import { getServerSupabase } from "@/lib/supabase/server";
 import {
   deriveProfileInitial,
@@ -11,8 +13,35 @@ import {
   upsertUserProfile,
 } from "@/lib/profile";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { Button } from "@/components/ui/button";
 
 const isScreenshotMode = process.env.NEXT_PUBLIC_SCREENSHOT_MODE === "1";
+
+const appModules = [
+  "Item Bank Data",
+  "Action List",
+  "Item Selection Tool",
+  "TOAST",
+  "Sample 5",
+  "Sample 6",
+  "Sample 7",
+  "Sample 8",
+];
+
+function AppCard({ title }: { title: string }) {
+  return (
+    <article className="flex flex-col rounded-lg border bg-card p-4">
+      <div className="flex items-center gap-4">
+        <div className="rounded-lg bg-primary p-3 text-primary-foreground">
+          <AppWindow className="size-6" />
+        </div>
+        <h2 className="flex-1 text-lg font-semibold">{title}</h2>
+      </div>
+      <div className="flex-1" />
+      <Button variant="kaeo" className="mt-4">Open</Button>
+    </article>
+  );
+}
 
 export default async function DashboardPage() {
   // Screenshot / mock mode (auth bypassed by middleware)
@@ -46,28 +75,12 @@ export default async function DashboardPage() {
         <section className="mx-auto max-w-5xl space-y-4 px-6 py-8">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {displayName}. Here is a quick look at today’s
-            activity.
+            Welcome back, {displayName}. Here are your available app modules.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            <article className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Collections
-              </h2>
-              <p className="mt-2 text-2xl font-semibold">18 active</p>
-              <p className="text-xs text-muted-foreground">
-                3 updated this week
-              </p>
-            </article>
-            <article className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                Assets
-              </h2>
-              <p className="mt-2 text-2xl font-semibold">124 published</p>
-              <p className="text-xs text-muted-foreground">
-                12 awaiting review
-              </p>
-            </article>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {appModules.map((title) => (
+              <AppCard key={title} title={title} />
+            ))}
           </div>
         </section>
       </main>
@@ -120,7 +133,14 @@ export default async function DashboardPage() {
 
       <section className="mx-auto max-w-5xl space-y-4 px-6 py-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {displayName}.</p>
+        <p className="text-muted-foreground">
+          Welcome back, {displayName}. Here are your available app modules.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {appModules.map((title) => (
+            <AppCard key={title} title={title} />
+          ))}
+        </div>
       </section>
     </main>
   );
