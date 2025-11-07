@@ -6,9 +6,14 @@ const config: Config = {
     "./app/**/*.{ts,tsx,js,jsx}",
     "./components/**/*.{ts,tsx,js,jsx}",
     "./pages/**/*.{ts,tsx,js,jsx}",
+    "./src/**/*.{ts,tsx,js,jsx}",
   ],
   theme: {
     extend: {
+      colors: {
+        "kaeo-blue": "var(--kaeo-blue)",
+        "kaeo-turquoise": "var(--kaeo-turquoise)",
+      },
       fontFamily: {
         // Use Geist Sans when you add className="font-sans"
         sans: [

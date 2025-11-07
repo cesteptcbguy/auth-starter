@@ -1,9 +1,12 @@
+/**
+ * @import { theme } from "tailwindcss"
+ */
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -78,6 +81,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Kaeo colors */
+  --kaeo-blue: oklch(0.2825 0.086 257.29);
+  --kaeo-turquoise: oklch(0.5325 0.122 198.92);
 }
 
 .dark {
@@ -114,6 +121,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  
+  /* Kaeo colors */
+  --kaeo-blue: oklch(0.2825 0.086 257.29);
+  --kaeo-turquoise: oklch(0.5325 0.122 198.92);
 }
 
 @layer base {
