@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Route } from "next";
+import type { Session } from "@supabase/supabase-js";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { Button } from "@/components/ui/button";
@@ -28,14 +29,20 @@ export default function Navbar() {
     const supabase = getSupabaseClient();
     let isMounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) return;
-      setHasSession(Boolean(data.session));
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const applyFromSession = (session: Session | null) => {
       if (!isMounted) return;
       setHasSession(Boolean(session));
+    };
+
+    // initial session
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => applyFromSession(session))
+      .catch(() => applyFromSession(null));
+
+    // subscribe to changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      applyFromSession(session);
     });
 
     return () => {
