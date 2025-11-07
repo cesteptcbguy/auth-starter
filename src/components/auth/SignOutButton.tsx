@@ -45,8 +45,8 @@ export function SignOutButton({ className, onSignedOut }: SignOutButtonProps) {
       disabled={isSigningOut}
       aria-disabled={isSigningOut}
       className={cn(
-        "inline-flex items-center gap-1 bg-transparent px-0 py-0 text-sm font-medium text-gray-700 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400",
-        "border-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center gap-1 border-0 bg-transparent px-0 py-0 text-sm font-medium text-primary underline-offset-4 transition hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "cursor-pointer disabled:cursor-not-allowed disabled:opacity-60",
         className
       )}
     >

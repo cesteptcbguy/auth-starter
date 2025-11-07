@@ -38,7 +38,9 @@ function AppCard({ title }: { title: string }) {
         <h2 className="flex-1 text-lg font-semibold">{title}</h2>
       </div>
       <div className="flex-1" />
-      <Button className="mt-4">Open</Button>
+      <Button variant="secondary" className="mt-4">
+        Open
+      </Button>
     </article>
   );
 }
@@ -125,7 +127,7 @@ export default async function DashboardPage() {
             </div>
             <div className="text-right">
               <p className="text-sm font-medium">{displayName}</p>
-              <SignOutButton className="text-xs font-medium text-primary underline-offset-4 hover:underline" />
+              <SignOutButton />
             </div>
           </div>
         </div>

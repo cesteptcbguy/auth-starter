@@ -1,5 +1,13 @@
 // src/app/styleguide/page.tsx
+import { redirect } from "next/navigation";
+
+const isProduction = process.env.NODE_ENV === "production";
+
 export default function Styleguide() {
+  if (isProduction) {
+    redirect("/");
+  }
+
   const tokens = [
     { name: "background", fg: "foreground" },
     { name: "card", fg: "card-foreground" },
