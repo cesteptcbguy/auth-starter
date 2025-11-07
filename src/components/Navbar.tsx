@@ -15,12 +15,10 @@ type NavItem = {
 const PRIMARY_ITEMS: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/catalog", label: "Catalog" },
 ];
 
 const GUEST_AUTH_ITEMS: NavItem[] = [
   { href: "/sign-in", label: "Sign in" },
-  { href: "/sign-up", label: "Sign up", emphasis: true },
 ];
 
 export default function Navbar() {
@@ -124,7 +122,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b bg-white/70 backdrop-blur">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="text-lg font-semibold">
-          BoldBuilder
+          KĀʻEO Item Bank App Suite
         </Link>
         <div className="flex items-center gap-3">
           <button

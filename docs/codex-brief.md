@@ -1,4 +1,4 @@
-# Codex Brief — BoldBuilder
+# Codex Brief — KĀʻEO Item Bank App Suite
 
 ## Stack
 - Next.js App Router (TypeScript), Node 20, pnpm 9
