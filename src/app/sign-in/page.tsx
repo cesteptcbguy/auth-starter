@@ -143,7 +143,7 @@ export default function SignInPage() {
     <main className="mx-auto max-w-sm space-y-5 p-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground/80">
           Welcome back! Enter your credentials to continue.
         </p>
       </header>
