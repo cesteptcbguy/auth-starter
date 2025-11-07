@@ -20,12 +20,6 @@ const BUILD_ID_PATH = path.join(".next", "BUILD_ID");
 const OUTPUT_DIR = path.join("docs", "screenshots");
 
 const OUTPUTS = {
-  // sign-up may be disabled in this project; we’ll attempt gracefully
-  signUpForm: path.join(OUTPUT_DIR, "auth-sign-up-form.png"),
-  signUpSuccess: path.join(OUTPUT_DIR, "auth-sign-up-success.png"),
-  verifyVerified: path.join(OUTPUT_DIR, "auth-verify-verified.png"),
-  verifyAlready: path.join(OUTPUT_DIR, "auth-verify-already.png"),
-  verifyError: path.join(OUTPUT_DIR, "auth-verify-error.png"),
   resetForm: path.join(OUTPUT_DIR, "auth-reset-form.png"),
   resetSuccess: path.join(OUTPUT_DIR, "auth-reset-success.png"),
   updateForm: path.join(OUTPUT_DIR, "auth-update-password.png"),
@@ -34,8 +28,6 @@ const OUTPUTS = {
 
 const E2E_EMAIL = process.env.E2E_EMAIL || "teacher@example.com";
 const E2E_PASSWORD = process.env.E2E_PASSWORD || "ExamplePass1!";
-const INCLUDE_SIGNUP = process.env.SCREENSHOT_INCLUDE_SIGNUP !== "0"; // set to 0 to skip
-
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function ensureDir(filePath) {
@@ -191,90 +183,6 @@ async function clickFirst(page, locators) {
   return false;
 }
 
-async function tryCaptureSignUp(page) {
-  if (!INCLUDE_SIGNUP) {
-    console.log(
-      "[capture-auth] Skipping sign-up flow (SCREENSHOT_INCLUDE_SIGNUP=0)."
-    );
-    return;
-  }
-  console.log("[capture-auth] Attempting sign-up flow…");
-  try {
-    await page.goto(`${ORIGIN}/sign-up?redirectTo=%2Fdashboard`, {
-      waitUntil: "domcontentloaded",
-    });
-    await page.waitForLoadState("networkidle", { timeout: 60000 });
-
-    // If route doesn’t exist or redirects to sign-in, bail gracefully
-    const url = page.url();
-    if (!/\/sign-up/i.test(url)) {
-      console.log(
-        `[capture-auth] /sign-up not available (at ${url}). Skipping.`
-      );
-      return;
-    }
-
-    await (await getEmailInput(page)).fill(E2E_EMAIL);
-    await (await getPasswordInput(page)).fill(E2E_PASSWORD);
-
-    // Confirm password might exist
-    const confirm = page.getByLabel(/confirm password/i);
-    if (await confirm.count()) {
-      await confirm.fill(E2E_PASSWORD);
-    }
-
-    await capture(page, OUTPUTS.signUpForm, "Sign up – filled form");
-
-    // Create account button variants
-    await Promise.allSettled([
-      page.waitForSelector('[role="alert"]', { timeout: 15000 }),
-      clickFirst(page, [
-        page.getByRole("button", { name: /create account/i }),
-        page.getByRole("button", { name: /sign up/i }),
-        page.getByRole("button", { name: /continue/i }),
-      ]),
-    ]);
-    await wait(300);
-    await capture(
-      page,
-      OUTPUTS.signUpSuccess,
-      "Sign up – success (or post-click)"
-    );
-  } catch (err) {
-    console.warn(
-      "[capture-auth] Sign-up flow unavailable or failed (non-fatal):",
-      err?.message || err
-    );
-  }
-}
-
-async function captureVerifyStates(page) {
-  const verifyStates = [
-    {
-      value: "verified",
-      label: "Verify – verified",
-      out: OUTPUTS.verifyVerified,
-    },
-    { value: "already", label: "Verify – already", out: OUTPUTS.verifyAlready },
-    { value: "error", label: "Verify – error", out: OUTPUTS.verifyError },
-  ];
-  for (const s of verifyStates) {
-    try {
-      await page.goto(
-        `${ORIGIN}/verify?mock=${s.value}&redirectTo=%2Fdashboard`,
-        { waitUntil: "domcontentloaded" }
-      );
-      await page.waitForLoadState("networkidle", { timeout: 60000 });
-      await capture(page, s.out, s.label);
-    } catch (err) {
-      console.warn(
-        `[capture-auth] Verify state ${s.value} skipped:`,
-        err?.message || err
-      );
-    }
-  }
-}
-
 async function captureResetPassword(page) {
   try {
     await page.goto(`${ORIGIN}/reset-password?redirectTo=%2Fdashboard`, {
@@ -303,9 +211,12 @@ async function captureResetPassword(page) {
 
 async function captureUpdatePassword(page) {
   try {
-    await page.goto(`${ORIGIN}/update-password?redirectTo=%2Fdashboard`, {
-      waitUntil: "domcontentloaded",
-    });
+    await page.goto(
+      `${ORIGIN}/reset-password?mode=update&redirectTo=%2Fdashboard`,
+      {
+        waitUntil: "domcontentloaded",
+      }
+    );
     await page.waitForLoadState("networkidle", { timeout: 60000 });
 
     const newPwd = page.getByLabel(/new password/i);
@@ -337,12 +248,6 @@ async function captureAuthFlows(browser) {
       err?.message || err
     );
   }
-
-  // Try sign-up only if available
-  await tryCaptureSignUp(page);
-
-  // Verify mock screens (non-fatal if route doesn’t exist)
-  await captureVerifyStates(page);
 
   // Reset + Update flows
   await captureResetPassword(page);

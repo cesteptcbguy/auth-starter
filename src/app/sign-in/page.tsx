@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRedirectTarget } from "@/hooks/useRedirectTarget";
-import { resolveRedirectPath, withRedirectParam } from "@/lib/redirect";
+import { resolveRedirectPath } from "@/lib/redirect";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -137,7 +137,11 @@ export default function SignInPage() {
     setPending(false);
   }
 
-  const resetHref = withRedirectParam("/reset-password", redirectTo);
+  // Typed-routes–safe Link target for reset password
+  const resetHref =
+    redirectTo && redirectTo.trim()
+      ? ({ pathname: "/reset-password", query: { redirectTo } } as const)
+      : "/reset-password";
 
   return (
     <main className="mx-auto max-w-sm space-y-5 p-6">
@@ -218,7 +222,7 @@ export default function SignInPage() {
           </Link>
         </p>
         <p>
-          <Link className="text-muted-foreground underline" href="/">
+          <Link className="text-foreground/80 underline" href="/">
             Back home
           </Link>
         </p>

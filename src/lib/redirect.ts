@@ -37,37 +37,3 @@ export function withRedirectParam(
   const search = url.searchParams.toString();
   return `${url.pathname}${search ? `?${search}` : ""}`;
 }
-
-export function buildAbsoluteUrl(
-  path: string,
-  redirectTo?: string | null,
-  fallback: string = DEFAULT_FALLBACK
-) {
-  const origin = getWebOrigin();
-  const url = new URL(path, origin);
-
-  const destination = resolveRedirectPath(redirectTo, fallback);
-  if (destination && destination !== fallback) {
-    url.searchParams.set("redirectTo", destination);
-  } else if (fallback && fallback !== "") {
-    url.searchParams.set("redirectTo", fallback);
-  }
-
-  return url.toString();
-}
-
-export async function readRedirectFallback() {
-  try {
-    const response = await fetch("/api/redirect-fallback", {
-      credentials: "same-origin",
-    });
-    if (!response.ok) {
-      return null;
-    }
-    const text = (await response.text()).trim();
-    return isValidRedirect(text) ? text : null;
-  } catch (error) {
-    console.warn("[redirect] failed to fetch fallback", error);
-    return null;
-  }
-}
