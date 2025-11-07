@@ -26,7 +26,7 @@ export default async function middleware(req: NextRequest) {
   if (isScreenshotMode && isLocalhost) return res;
 
   // Guard only dashboard
-  const protectedPaths = ["/dashboard"];
+  const protectedPaths = ["/dashboard", "/profile"];
   const isProtected = protectedPaths.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
