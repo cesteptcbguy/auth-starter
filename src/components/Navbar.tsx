@@ -1,3 +1,4 @@
+// Navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -13,11 +14,12 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 type NavItem = {
   href: Route;
   label: string;
-  authOnly?: boolean;
+  authOnly?: boolean; // show only when signed in
+  guestOnly?: boolean; // show only when signed out
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Home", guestOnly: true },
   { href: "/dashboard", label: "Dashboard", authOnly: true },
 ];
 
@@ -52,7 +54,12 @@ export default function Navbar() {
   }, []);
 
   const links = useMemo(
-    () => NAV_ITEMS.filter((item) => (item.authOnly ? hasSession : true)),
+    () =>
+      NAV_ITEMS.filter((item) => {
+        if (item.authOnly && !hasSession) return false;
+        if (item.guestOnly && hasSession) return false;
+        return true;
+      }),
     [hasSession]
   );
 

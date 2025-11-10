@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:ci": "cross-env NEXT_DISABLE_FONT_DOWNLOADS=1 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=test_anon_key next build",
+    "build:ci": "cross-env NEXT_DISABLE_FONT_DOWNLOADS=1 next build",
     "check:ci": "pnpm typecheck && pnpm lint && pnpm build:ci",
-    "start": "next start -p 3000",
+    "start": "next start -p ${PORT:-3000} -H 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
     "format": "prettier --write .",
@@ -22,7 +22,7 @@
     "screenshot": "cross-env SCREENSHOT_MODE=1 NEXT_PUBLIC_SCREENSHOT_MODE=1 start-server-and-test start http://localhost:3000 \"pnpm screenshot:cli\"",
     "pw:install": "playwright install",
     "pw:install:all": "playwright install chromium firefox webkit",
-    "postinstall": "if [ -n \"VERCEL\" ] || [ -n \"CI\" ]; then echo 'Skipping Playwright install on Vercel/CI'; else pnpm exec playwright install chromium; fi"
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
